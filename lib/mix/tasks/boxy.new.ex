@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Boxy.New do
     * PostgreSQL is always the database
     * Standard Phoenix project structure
     * CLAUDE.md files in every directory for Claude Code integration
+    * Git pre-commit hook that ensures CLAUDE.md files and passing tests
 
   ## Usage
 
@@ -57,6 +58,8 @@ defmodule Mix.Tasks.Boxy.New do
     if File.dir?(app_path) do
       copy_pedant_task(app_path)
       inject_precommit_alias(app_path)
+      ensure_git_initialized(app_path)
+      install_git_hook(app_path)
       run_pedant(app_path)
     end
   end
@@ -86,6 +89,30 @@ defmodule Mix.Tasks.Boxy.New do
     if content != updated_content do
       File.write!(mix_exs_path, updated_content)
       Mix.shell().info("* injecting #{Path.relative_to_cwd(mix_exs_path)} - precommit alias")
+    end
+  end
+
+  defp ensure_git_initialized(app_path) do
+    git_dir = Path.join(app_path, ".git")
+
+    unless File.dir?(git_dir) do
+      File.cd!(app_path, fn ->
+        System.cmd("git", ["init"], into: IO.stream(:stdio, :line))
+      end)
+    end
+  end
+
+  defp install_git_hook(app_path) do
+    git_hooks_dir = Path.join([app_path, ".git", "hooks"])
+
+    if File.dir?(git_hooks_dir) do
+      priv_dir = :code.priv_dir(:boxy) |> to_string()
+      hook_source = Path.join([priv_dir, "templates", "pre-commit"])
+      hook_dest = Path.join(git_hooks_dir, "pre-commit")
+
+      File.cp!(hook_source, hook_dest)
+      File.chmod!(hook_dest, 0o755)
+      Mix.shell().info("* installing .git/hooks/pre-commit")
     end
   end
 

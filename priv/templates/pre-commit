@@ -1,0 +1,19 @@
+#!/bin/sh
+# Boxy pre-commit hook
+# Ensures CLAUDE.md files exist and all tests pass before committing
+
+echo "Running pre-commit checks..."
+
+# Ensure CLAUDE.md files exist in all directories
+echo "→ Checking for CLAUDE.md files..."
+mix precommit || exit 1
+
+# Run tests
+echo "→ Running tests..."
+mix test || {
+  echo "❌ Tests failed. Commit aborted."
+  exit 1
+}
+
+echo "✓ All pre-commit checks passed"
+exit 0

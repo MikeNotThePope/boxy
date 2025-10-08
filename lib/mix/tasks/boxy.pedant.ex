@@ -47,10 +47,15 @@ defmodule Mix.Tasks.Boxy.Pedant do
   end
 
   defp not_gitignored?(path) do
-    case System.cmd("git", ["check-ignore", path], stderr_to_stdout: true) do
-      {_, 1} -> true  # Not ignored (exit code 1)
-      {_, 0} -> false # Ignored (exit code 0)
-      _ -> true       # If git isn't available, include it
+    # Skip .git directory and its subdirectories
+    if String.contains?(path, "/.git") or String.ends_with?(path, "/.git") do
+      false
+    else
+      case System.cmd("git", ["check-ignore", path], stderr_to_stdout: true) do
+        {_, 1} -> true  # Not ignored (exit code 1)
+        {_, 0} -> false # Ignored (exit code 0)
+        _ -> true       # If git isn't available, include it
+      end
     end
   end
 
