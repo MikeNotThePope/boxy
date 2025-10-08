@@ -7,6 +7,8 @@ defmodule Mix.Tasks.Boxy.Pedant do
     * Is not ignored by .gitignore
     * Does not already have a CLAUDE.md file
 
+  Any newly created CLAUDE.md files are automatically added to git.
+
   ## Usage
 
       $ mix boxy.pedant
@@ -29,13 +31,23 @@ defmodule Mix.Tasks.Boxy.Pedant do
       directories
       |> Enum.filter(&not_gitignored?/1)
 
-    created_count =
+    created_files =
       non_ignored_dirs
       |> Enum.map(&ensure_claude_md/1)
-      |> Enum.count(& &1)
+      |> Enum.filter(& &1)
 
-    if created_count > 0 do
-      Mix.shell().info("Created #{created_count} CLAUDE.md file(s)")
+    if length(created_files) > 0 do
+      Mix.shell().info("Created #{length(created_files)} CLAUDE.md file(s)")
+
+      # Add created files to git
+      Enum.each(created_files, fn file_path ->
+        case System.cmd("git", ["add", file_path], stderr_to_stdout: true) do
+          {_, 0} -> :ok
+          {output, _} -> Mix.shell().info("Warning: Could not add #{file_path} to git: #{output}")
+        end
+      end)
+
+      Mix.shell().info("Added created CLAUDE.md files to git")
     else
       Mix.shell().info("All directories already have CLAUDE.md files")
     end
@@ -66,11 +78,11 @@ defmodule Mix.Tasks.Boxy.Pedant do
     claude_md_path = Path.join(directory, "CLAUDE.md")
 
     if File.exists?(claude_md_path) do
-      false
+      nil
     else
       File.write!(claude_md_path, "")
       Mix.shell().info("  * creating #{Path.relative_to_cwd(claude_md_path)}")
-      true
+      claude_md_path
     end
   end
 end
