@@ -16,10 +16,13 @@ mix deps.compile      # Compile dependencies
 
 ### Testing
 ```bash
-mix test              # Run all tests
+mix test              # Run Boxy tests only
 mix test <file>       # Run a specific test file
 mix test <file>:<line> # Run a specific test at line number
+mix boxy.test.all     # Run Boxy tests + test app tests via test app's test alias
 ```
+
+**Note**: The test app in `tmp/test_app` has a `test` alias that runs both Boxy's tests and its own tests. Running `mix boxy.test.all` creates the test app if needed and runs `mix test` inside it.
 
 ### Code Quality
 ```bash
@@ -51,3 +54,12 @@ The project targets Elixir ~> 1.18 and includes the `:logger` application.
 ## Development Conventions
 
 - **Test Apps**: Always create test applications in the `tmp/` directory (e.g., `tmp/test_app`). This keeps test artifacts separate from the main codebase and is already configured in `.gitignore`.
+
+## Pre-Commit Hook
+
+This repository has a pre-commit hook that runs `mix precommit`, which executes:
+1. `mix boxy.pedant` - Ensures all directories have CLAUDE.md files
+2. `mix format --check-formatted` - Verifies code formatting
+3. `mix test.all` - Runs both Boxy tests and test app tests (if tmp/test_app exists)
+
+The hook prevents commits if any of these checks fail.

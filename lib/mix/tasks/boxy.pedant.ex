@@ -52,9 +52,12 @@ defmodule Mix.Tasks.Boxy.Pedant do
       false
     else
       case System.cmd("git", ["check-ignore", path], stderr_to_stdout: true) do
-        {_, 1} -> true  # Not ignored (exit code 1)
-        {_, 0} -> false # Ignored (exit code 0)
-        _ -> true       # If git isn't available, include it
+        # Not ignored (exit code 1)
+        {_, 1} -> true
+        # Ignored (exit code 0)
+        {_, 0} -> false
+        # If git isn't available, include it
+        _ -> true
       end
     end
   end

@@ -62,6 +62,7 @@ defmodule Mix.Tasks.Boxy.New do
       ensure_git_initialized(app_path)
       install_git_hook(app_path)
       replace_homepage(app_path)
+      replace_homepage_test(app_path)
       run_pedant(app_path)
     end
   end
@@ -120,7 +121,8 @@ defmodule Mix.Tasks.Boxy.New do
 
   defp replace_homepage(app_path) do
     # Find the homepage template (pattern: lib/*_web/controllers/page_html/home.html.heex)
-    homepage_pattern = Path.join([app_path, "lib", "*_web", "controllers", "page_html", "home.html.heex"])
+    homepage_pattern =
+      Path.join([app_path, "lib", "*_web", "controllers", "page_html", "home.html.heex"])
 
     case Path.wildcard(homepage_pattern) do
       [homepage_path | _] ->
@@ -132,6 +134,36 @@ defmodule Mix.Tasks.Boxy.New do
 
       [] ->
         Mix.shell().info("Warning: Could not find homepage template to replace")
+    end
+  end
+
+  defp replace_homepage_test(app_path) do
+    # Find the test file (pattern: test/*_web/controllers/page_controller_test.exs)
+    test_pattern =
+      Path.join([app_path, "test", "*_web", "controllers", "page_controller_test.exs"])
+
+    case Path.wildcard(test_pattern) do
+      [test_path | _] ->
+        # Determine the web module name from the app path
+        app_name =
+          app_path
+          |> Path.basename()
+          |> Macro.camelize()
+
+        web_module_name = "#{app_name}Web"
+
+        priv_dir = :code.priv_dir(:boxy) |> to_string()
+        template_source = Path.join([priv_dir, "templates", "page_controller_test.exs"])
+        template_content = File.read!(template_source)
+
+        # Replace MODULE_NAME with the actual web module name
+        content = String.replace(template_content, "MODULE_NAME", web_module_name)
+
+        File.write!(test_path, content)
+        Mix.shell().info("* replacing #{Path.relative_to_cwd(test_path)}")
+
+      [] ->
+        Mix.shell().info("Warning: Could not find page_controller_test.exs to replace")
     end
   end
 
