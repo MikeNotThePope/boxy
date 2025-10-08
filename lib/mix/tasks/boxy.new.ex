@@ -8,6 +8,7 @@ defmodule Mix.Tasks.Boxy.New do
     * Standard Phoenix project structure
     * CLAUDE.md files in every directory for Claude Code integration
     * Git pre-commit hook that ensures CLAUDE.md files and passing tests
+    * Minimal blank homepage (replaces Phoenix marketing page)
 
   ## Usage
 
@@ -60,6 +61,7 @@ defmodule Mix.Tasks.Boxy.New do
       inject_precommit_alias(app_path)
       ensure_git_initialized(app_path)
       install_git_hook(app_path)
+      replace_homepage(app_path)
       run_pedant(app_path)
     end
   end
@@ -113,6 +115,23 @@ defmodule Mix.Tasks.Boxy.New do
       File.cp!(hook_source, hook_dest)
       File.chmod!(hook_dest, 0o755)
       Mix.shell().info("* installing .git/hooks/pre-commit")
+    end
+  end
+
+  defp replace_homepage(app_path) do
+    # Find the homepage template (pattern: lib/*_web/controllers/page_html/home.html.heex)
+    homepage_pattern = Path.join([app_path, "lib", "*_web", "controllers", "page_html", "home.html.heex"])
+
+    case Path.wildcard(homepage_pattern) do
+      [homepage_path | _] ->
+        priv_dir = :code.priv_dir(:boxy) |> to_string()
+        template_source = Path.join([priv_dir, "templates", "home.html.heex"])
+
+        File.cp!(template_source, homepage_path)
+        Mix.shell().info("* replacing #{Path.relative_to_cwd(homepage_path)}")
+
+      [] ->
+        Mix.shell().info("Warning: Could not find homepage template to replace")
     end
   end
 
