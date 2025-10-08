@@ -44,5 +44,10 @@ This is a fresh Elixir project with a standard structure:
 - `lib/` - Main source code (currently contains only the `Boxy` module)
 - `test/` - Test files using ExUnit
 - `mix.exs` - Project configuration and dependencies
+- `tmp/` - Directory for test apps during development (gitignored)
 
 The project targets Elixir ~> 1.18 and includes the `:logger` application.
+
+## Development Conventions
+
+- **Test Apps**: Always create test applications in the `tmp/` directory (e.g., `tmp/test_app`). This keeps test artifacts separate from the main codebase and is already configured in `.gitignore`.
